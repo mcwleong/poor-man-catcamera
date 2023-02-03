@@ -1,0 +1,24 @@
+{
+    "Cameras": [
+        {
+            "Location": 0,
+            "Name": "LivingRoomCamera",
+            "Resolution": [1080,720]
+            },
+        {
+            "Location": 1,
+            "Name": "StudyRoomEnterence",
+            "Resolution": [1080,720]
+        }
+    ],
+    "Streams": [
+        {
+            "Location": "http://192.168.0.254",
+            "Name": "espFeederCamera"
+        },
+        {
+            "Location": "http://192.168.0.253",
+            "Name": "espLitterBoxCamera"
+        }
+    ]
+}
