@@ -94,9 +94,9 @@ class CameraWorker:
             print (camera)
             tpool.append(threading.Thread(target=self.startCamera, args=(camera,)))
 
-        for stream in self.config["Streams"]:
-            print(stream)
-            tpool.append(threading.Thread(target=self.startStream, args=(stream,)))
+        #for stream in self.config["Streams"]:
+        #    print(stream)
+        #    tpool.append(threading.Thread(target=self.startStream, args=(stream,)))
 
         for t in tpool:
             t.start()
