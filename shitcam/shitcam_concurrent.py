@@ -108,7 +108,7 @@ class CameraWorker:
 def main():
 
     ## Load camera config
-    f=open("./shitcam-v3/cameraConfig.json") 
+    f=open("./shitcam/cameraConfig.json") 
     config = json.load(f)
     print(config)
     f.close()
