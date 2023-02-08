@@ -3,22 +3,36 @@
         {
             "Location": 0,
             "Name": "LivingRoomCamera",
-            "Resolution": [1080,720]
+            "Enabled": "True",
+            "Resolution": [1280,720],
+            "ImageCapture": "True",
+            "VideoCapture": "False"
             },
         {
             "Location": 1,
             "Name": "StudyRoomEnterence",
-            "Resolution": [1080,720]
+            "Enabled": "True",
+            "Resolution": [960,720],
+            "ImageCapture": "True",
+            "VideoCapture": "False"
         }
     ],
     "Streams": [
         {
             "Location": "http://192.168.0.254",
-            "Name": "espFeederCamera"
+            "Name": "espFeederCamera",
+            "Enabled": "True",
+            "Resolution": [1024,768],
+            "ImageCapture": "False",
+            "VideoCapture": "False"
         },
         {
             "Location": "http://192.168.0.253",
-            "Name": "espLitterBoxCamera"
+            "Name": "espLitterBoxCamera",
+            "Enabled": "True",
+            "Resolution": [1024,768],
+            "ImageCapture": "True",
+            "VideoCapture": "False"
         }
     ]
 }

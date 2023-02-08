@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import json
+import os 
 
 # Multithreading
 from multiprocessing import Process, connection, current_process
@@ -13,14 +14,28 @@ from PIL import Image
 
 #for capturing timed images
 from datetime import datetime, timedelta
+import time
 
 class CameraWorker:
     def __init__(self,conf):
         self.config = conf
         self.CAPTURE_INTERVAL = 20
 
+    def getVideoWriter(self, cameraSetting)->cv2.VideoWriter:
+        name = cameraSetting["Name"]
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        vid_name = "D:\\shitcam\\"+ name + "_{}.avi".format(datetime.now().strftime("%y%m%d%H%M%S"))
+        out = cv2.VideoWriter(vid_name,fourcc, 30, (cameraSetting["Resolution"][0],cameraSetting["Resolution"][1]))
+        return out
+
+
+    # save image to file
     def imageCapture(self, frame, timenow, cameraName):
-        img_name = "D:\\shitcam\\"+ cameraName + "_{}.jpg".format(timenow.strftime("%y%m%d%H%M%S"))
+        directory = "D:\\shitcam\\{}\\".format(timenow.strftime("%y%m%d"))
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        img_name = directory + "{}_{}.jpg".format(cameraName, timenow.strftime("%y%m%d%H%M%S"))
         cv2.imwrite(img_name, frame, [cv2.IMWRITE_JPEG_QUALITY, 80] )
         print("{} written!".format(img_name))
 
@@ -36,6 +51,13 @@ class CameraWorker:
 
         cam.set(cv2.CAP_PROP_FRAME_WIDTH, cameraSetting["Resolution"][0])
         cam.set(cv2.CAP_PROP_FRAME_HEIGHT, cameraSetting["Resolution"][1])
+
+        vidCapture = True if cameraSetting["VideoCapture"] =="True" else False
+        imgCapture = True if cameraSetting["ImageCapture"] =="True" else False
+        
+        videoWriter = None
+        if vidCapture:
+            videoWriter = self.getVideoWriter(cameraSetting=cameraSetting)
         
         cv2.namedWindow(name)
         delta = 1000
@@ -43,60 +65,142 @@ class CameraWorker:
             now = datetime.now()
             ret, frame = cam.read()
             cv2.imshow(name, frame)
-            if delta>self.CAPTURE_INTERVAL:
-                prev=now
-                Process(target=self.imageCapture, args =(frame, now, name)).start()
-            
-            delta = (now-prev).total_seconds()
 
-            if cv2.waitKey(10) & 0XFF == ord('q'):
+            if imgCapture and delta>self.CAPTURE_INTERVAL:
+                 prev=now
+                 threading.Thread(target=self.imageCapture, args=(frame, now, name)).start()
+
+            if vidCapture:
+                videoWriter.write(frame)
+
+            delta = (now-prev).total_seconds()
+            
+            # Quit
+            keyin = cv2.waitKey(10) & 0XFF
+
+            if keyin == ord('q'):
+                if vidCapture:
+                    videoWriter.release()
+                    capture = False
+                    print ("{} recording stopped".format(name))
                 break
+            
+            # Record/stop record
+            elif keyin == ord('r'):
+                if vidCapture:
+                    vidCapture = False
+                    videoWriter.release()
+                    videoWriter = None
+                    print ("{} recording stopped".format(name))
+
+                else:
+                    videoWriter = self.getVideoWriter(cameraSetting=cameraSetting)
+                    vidCapture = True
+                    print ("{} recording start".format(name))
+            
+            # snapshot
+            elif keyin == 32:
+                #Process(target=self.imageCapture, args =(frame, now, name)).start()
+                threading.Thread(target=self.imageCapture, args=(frame, now, name)).start()
+            # toggle auto image capture
+            elif keyin == ord('i'):
+                if imgCapture:
+                    imgCapture = False
+                    print('Auto Image Capture: off')
+                else:
+                    imgCapture = False
+                    print('Auto Image Capture: on')
+
+
+                
 
     def startStream(self, cameraSetting):
         name = cameraSetting["Name"]
         url = cameraSetting["Location"]
         #res = requests.get(url, stream=True)
+
+        vidCapture = True if cameraSetting["VideoCapture"] =="True" else False
+        imgCapture = True if cameraSetting["ImageCapture"] =="True" else False
+        
+        videoWriter = None
+        if vidCapture:
+            videoWriter = self.getVideoWriter(cameraSetting=cameraSetting)
+        
         imageBytes = bytes()
-
         delta =1000
+        while True:
+            try:
+                with requests.get(url, stream = True) as res:
+                    for data in res.iter_content(chunk_size=1024):
+                        now = datetime.now()
+                        imageBytes += data
+                        a = imageBytes.find(b'\xff\xd8')
+                        b = imageBytes.find(b'\xff\xd9')
+                        if a != -1 and b != -1:
+                            jpg = imageBytes[a:b+2]
+                            imageBytes = imageBytes[b+2:]
 
-        with requests.get(url, stream = True) as res:
-            for data in res.iter_content():#):chunk_size=100):
-            # 输出data 查看每一张图片的开始与结尾，查找图片的头与尾截取jpg。并把剩余部分imageBytes做保存
-                
-                now = datetime.now()
+                            bytes_stream = BytesIO(jpg)
+                            frame = Image.open(bytes_stream)
+                            frame = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR)
 
-                imageBytes += data
-                a = imageBytes.find(b'\xff\xd8')
-                b = imageBytes.find(b'\xff\xd9')
-                if a != -1 and b != -1:
-                    jpg = imageBytes[a:b+2]
-                    imageBytes = imageBytes[b+2:]
+                            if imgCapture and delta>self.CAPTURE_INTERVAL:
+                                prev=now
+                                threading.Thread(target=self.imageCapture, args=(frame, now, name)).start()
 
-                    bytes_stream = BytesIO(jpg)
-                    frame = Image.open(bytes_stream)
-                    frame = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR)
-                    cv2.imshow(name, frame)
+                            if vidCapture:
+                                videoWriter.write(frame)
 
-                    if delta>self.CAPTURE_INTERVAL:
-                        prev=now
-                        Process(target=self.imageCapture, args =(frame, now, name)).start()
-                    
-                    delta = (now-prev).total_seconds()
+                            delta = (now-prev).total_seconds()
+                            
+                            # Quit
+                            keyin = cv2.waitKey(10) & 0XFF
 
-                    if cv2.waitKey(10) & 0XFF == ord('q'):
-                        break
+                            if keyin == ord('q'):
+                                if vidCapture:
+                                    videoWriter.release()
+                                    capture = False
+                                    print ("{} recording stopped".format(name))
+                                break
+                            
+                            # Record/stop record
+                            elif keyin == ord('r'):
+                                if vidCapture:
+                                    vidCapture = False
+                                    videoWriter.release()
+                                    videoWriter = None
+                                    print ("{} recording stopped".format(name))
+
+                                else:
+                                    videoWriter = self.getVideoWriter(cameraSetting=cameraSetting)
+                                    vidCapture = True
+                                    print ("{} recording start".format(name))
+                            
+                            # snapshot
+                            elif keyin == 32:
+                                #Process(target=self.imageCapture, args =(frame, now, name)).start()
+                                threading.Thread(target=self.imageCapture, args=(frame, now, name)).start()
+                            # toggle auto image capture
+                            elif keyin == ord('i'):
+                                if imgCapture:
+                                    imgCapture = False
+                                    print('Auto Image Capture: off')
+                                else:
+                                    imgCapture = False
+                                    print('Auto Image Capture: on')
+
+            except: 
+                print ('{} read failed, retrying..'.format(cameraSetting['Name']))
+            time.sleep(10)
+
 
     def run(self):
         #pool = [Process(target=run) for _ in range(4)]
         tpool = []
         for camera in self.config["Cameras"]:
-            print (camera)
-            tpool.append(threading.Thread(target=self.startCamera, args=(camera,)))
-
-        #for stream in self.config["Streams"]:
-        #    print(stream)
-        #    tpool.append(threading.Thread(target=self.startStream, args=(stream,)))
+            if camera["Enabled"]=="True":
+                print (camera)
+                tpool.append(threading.Thread(target=self.startCamera, args=(camera,)))
 
         for t in tpool:
             t.start()
@@ -110,7 +214,7 @@ def main():
     ## Load camera config
     f=open("./shitcam/cameraConfig.json") 
     config = json.load(f)
-    print(config)
+    #print(config)
     f.close()
     worker = CameraWorker(config)
     worker.run()
