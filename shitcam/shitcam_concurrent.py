@@ -128,6 +128,10 @@ class CameraWorker:
         
         imageBytes = bytes()
         delta =1000
+        cv2.namedWindow(name)
+        new_frame_time = 0
+        prev_frame_time = 0
+        average_fps = 0
         while True:
             try:
                 with requests.get(url, stream = True) as res:
@@ -143,6 +147,18 @@ class CameraWorker:
                             bytes_stream = BytesIO(jpg)
                             frame = Image.open(bytes_stream)
                             frame = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR)
+                            
+                            # FPS
+                            new_frame_time = time.time()
+                            fps = 1/(new_frame_time-prev_frame_time)
+                            average_fps = fps/20 + (average_fps*19)/20
+                            #print (fps)
+                            font = cv2.FONT_HERSHEY_SIMPLEX
+
+                            cv2.putText(frame, str(int(average_fps)), (7, 30), font, 1, (100, 255, 0), 1, cv2.LINE_AA)
+                            cv2.imshow(name, frame)
+
+                            prev_frame_time = new_frame_time
 
                             if imgCapture and delta>self.CAPTURE_INTERVAL:
                                 prev=now
@@ -189,7 +205,8 @@ class CameraWorker:
                                     imgCapture = False
                                     print('Auto Image Capture: on')
 
-            except: 
+            except Exception as e: 
+                print (e)
                 print ('{} read failed, retrying..'.format(cameraSetting['Name']))
             time.sleep(10)
 
@@ -201,7 +218,10 @@ class CameraWorker:
             if camera["Enabled"]=="True":
                 print (camera)
                 tpool.append(threading.Thread(target=self.startCamera, args=(camera,)))
-
+        for stream in self.config["Streams"]:
+            if stream["Enabled"]=="True":
+                print (stream)
+                tpool.append(threading.Thread(target=self.startStream, args=(stream,)))
         for t in tpool:
             t.start()
 

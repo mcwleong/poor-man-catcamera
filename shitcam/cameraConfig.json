@@ -3,15 +3,15 @@
         {
             "Location": 0,
             "Name": "LivingRoomCamera",
-            "Enabled": "True",
+            "Enabled": "False",
             "Resolution": [1280,720],
             "ImageCapture": "True",
             "VideoCapture": "False"
-            },
+        },
         {
             "Location": 1,
             "Name": "StudyRoomEnterence",
-            "Enabled": "True",
+            "Enabled": "False",
             "Resolution": [960,720],
             "ImageCapture": "True",
             "VideoCapture": "False"
@@ -23,7 +23,7 @@
             "Name": "espFeederCamera",
             "Enabled": "True",
             "Resolution": [1024,768],
-            "ImageCapture": "False",
+            "ImageCapture": "True",
             "VideoCapture": "False"
         },
         {
@@ -33,6 +33,15 @@
             "Resolution": [1024,768],
             "ImageCapture": "True",
             "VideoCapture": "False"
+        },
+        {
+            "Location": "http://192.168.0.252:81",
+            "Name": "espLivingRoomCamera",
+            "Enabled": "True",
+            "Resolution": [800,600],
+            "ImageCapture": "True",
+            "VideoCapture": "False"
         }
+
     ]
-}
+} 
