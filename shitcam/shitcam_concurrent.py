@@ -177,7 +177,8 @@ class CameraWorker:
                                     videoWriter.release()
                                     capture = False
                                     print ("{} recording stopped".format(name))
-                                break
+                                return
+                                cv2.destroyWindow()
                             
                             # Record/stop record
                             elif keyin == ord('r'):
