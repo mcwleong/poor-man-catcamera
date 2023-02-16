@@ -41,7 +41,7 @@ class CameraWorker:
         name = self.name
         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
         vid_name = "D:\\shitcam\\"+ name + "_{}.avi".format(datetime.now().strftime("%y%m%d%H%M%S"))
-        out = cv2.VideoWriter(vid_name,fourcc, 15, (self.resolution[0], self.resolution[1]))
+        out = cv2.VideoWriter(vid_name,fourcc, 20, (self.resolution[0], self.resolution[1]))
         return out
 
     def putDateTimeText(self, buf):        
@@ -163,7 +163,7 @@ class CameraWorker:
 
                 if self.stop == True:
                     break
-    
+            
 
 class CameraManager:
     def __init__(self, conf):
