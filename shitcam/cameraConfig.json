@@ -35,10 +35,10 @@
             "VideoCapture": "False"
         },
         {
-            "Location": "http://192.168.0.252:81",
+            "Location": "http://192.168.0.252",
             "Name": "espLivingRoomCamera",
             "Enabled": "True",
-            "Resolution": [800,600],
+            "Resolution": [1024,768],
             "ImageCapture": "True",
             "VideoCapture": "False"
         }
