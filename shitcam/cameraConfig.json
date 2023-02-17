@@ -15,6 +15,14 @@
             "Resolution": [960,720],
             "ImageCapture": "True",
             "VideoCapture": "False"
+        },
+        {
+            "Location": "D:\\shitcam\\espFeederCamera_230217025015.avi",
+            "Name": "Video",
+            "Enabled": "False",
+            "Resolution": [1024,768],
+            "ImageCapture": "False",
+            "VideoCapture": "False"
         }
     ],
     "Streams": [
